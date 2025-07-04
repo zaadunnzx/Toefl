@@ -19,11 +19,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Database
-const sequelize = require('./backend/config/database');
+const { sequelize } = require('./config/database');
 
 // Import routes
-const categoryRoutes = require('./backend/routes/categories');
-const phoneNumberRoutes = require('./backend/routes/phoneNumbers');
+const categoryRoutes = require('./routes/categories');
+const phoneNumberRoutes = require('./routes/phoneNumbers');
 
 // Use routes
 app.use('/api/categories', categoryRoutes);
@@ -64,7 +64,7 @@ app.use((err, req, res, next) => {
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: `Route ${req.originalUrl} not found`,

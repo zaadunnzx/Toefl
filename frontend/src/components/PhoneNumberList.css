@@ -1,0 +1,256 @@
+.phone-numbers-list {
+  margin-top: 24px;
+}
+
+.list-header {
+  margin-bottom: 24px;
+}
+
+.list-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.numbers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.number-card {
+  padding: 20px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+}
+
+.number-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.number-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.number-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.number-display {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.number-icon {
+  color: var(--text-secondary);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.number-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.original-number {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.normalized-number {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--primary-gradient);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.number-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-card-hover);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.copy-btn:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--primary-color);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.whatsapp-btn:hover {
+  background: rgba(37, 211, 102, 0.1);
+  color: #25d366;
+  border-color: rgba(37, 211, 102, 0.3);
+}
+
+.edit-btn:hover {
+  background: rgba(251, 191, 36, 0.1);
+  color: var(--warning);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.number-meta {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.meta-value {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  color: var(--text-muted);
+}
+
+.empty-state h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.empty-state p {
+  margin: 0;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+}
+
+.loading-container .spinner {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .numbers-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .number-card {
+    padding: 16px;
+  }
+  
+  .number-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .number-actions {
+    align-self: flex-end;
+  }
+  
+  .number-meta {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .meta-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .number-display {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .number-icon {
+    align-self: flex-start;
+  }
+  
+  .action-btn {
+    width: 36px;
+    height: 36px;
+  }
+}

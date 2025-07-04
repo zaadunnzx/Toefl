@@ -1,98 +1,208 @@
-# WhatsApp Numbers Backend System
+# WhatsApp Numbers Management System
 
-Backend system untuk menyimpan dan mengelola data nomor WhatsApp dengan kategorisasi dinamis.
+A full-stack web application for managing WhatsApp phone numbers with dynamic categorization, built with Node.js, Express, PostgreSQL, and React.
 
 ## Features
 
-- ✅ Menyimpan nomor WhatsApp dengan validasi format
-- ✅ Deteksi duplikasi nomor otomatis
-- ✅ Kategori dinamis yang bisa dikelola
-- ✅ Normalisasi format nomor (menghapus spasi, strip, tanda hubung)
-- ✅ REST API lengkap untuk CRUD operations
-- ✅ PostgreSQL database
-- ✅ Validasi nomor internasional
+- **Phone Number Management**: Store and organize WhatsApp numbers with validation and normalization
+- **Duplicate Detection**: Automatically detect and prevent duplicate phone numbers
+- **Category System**: Organize numbers into dynamic categories
+- **Bulk Import**: Import multiple phone numbers at once
+- **International Support**: Support for various international phone number formats
+- **Real-time Validation**: Live validation and duplicate checking
+- **Responsive Design**: Modern UI with Festiva-inspired theme
 
-## Database Schema
+## Technology Stack
 
-### Categories Table
-- `id` (Primary Key, Auto Increment)
-- `name` (String, Unique)
-- `description` (String, Optional)
-- `created_at` (Timestamp)
-- `updated_at` (Timestamp)
+### Backend
+- **Node.js** with Express.js
+- **PostgreSQL** database
+- **Sequelize** ORM
+- **CORS** for cross-origin requests
+- **dotenv** for environment variables
 
-### Phone Numbers Table
-- `id` (Primary Key, Auto Increment)
-- `original_number` (String) - Nomor asli yang diinput
-- `normalized_number` (String, Unique) - Nomor yang sudah dinormalisasi
-- `category_id` (Foreign Key ke Categories)
-- `created_at` (Timestamp)
-- `updated_at` (Timestamp)
+### Frontend
+- **React 18** with Vite
+- **React Router** for routing
+- **Axios** for API calls
+- **Lucide React** for icons
+- **CSS3** with custom properties
+
+## Installation
+
+### Prerequisites
+- Node.js 16+ 
+- PostgreSQL 12+
+- npm or yarn
+
+### Backend Setup
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd whatsapp-numbers-management
+```
+
+2. Install backend dependencies:
+```bash
+npm install
+```
+
+3. Create a `.env` file in the root directory:
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=whatsapp_numbers
+DB_USER=your_username
+DB_PASSWORD=your_password
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+```
+
+4. Create the PostgreSQL database:
+```sql
+CREATE DATABASE whatsapp_numbers;
+```
+
+5. Start the backend server:
+```bash
+npm start
+```
+
+The backend will be available at `http://localhost:3000`
+
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+```bash
+cd frontend
+```
+
+2. Install frontend dependencies:
+```bash
+npm install
+```
+
+3. Create a `.env` file in the frontend directory (optional):
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+4. Start the development server:
+```bash
+npm run dev
+```
+
+The frontend will be available at `http://localhost:5173`
 
 ## API Endpoints
 
 ### Categories
 - `GET /api/categories` - Get all categories
-- `POST /api/categories` - Create new category
-- `PUT /api/categories/:id` - Update category
-- `DELETE /api/categories/:id` - Delete category
+- `POST /api/categories` - Create a new category
+- `PUT /api/categories/:id` - Update a category
+- `DELETE /api/categories/:id` - Delete a category
 
 ### Phone Numbers
-- `GET /api/phone-numbers` - Get all phone numbers with categories
-- `POST /api/phone-numbers` - Add new phone number
-- `PUT /api/phone-numbers/:id` - Update phone number
-- `DELETE /api/phone-numbers/:id` - Delete phone number
-- `GET /api/phone-numbers/check/:number` - Check if number exists
+- `GET /api/phone-numbers` - Get all phone numbers
+- `POST /api/phone-numbers` - Create a new phone number
+- `POST /api/phone-numbers/bulk` - Bulk import phone numbers
+- `POST /api/phone-numbers/check` - Check if number exists
+- `DELETE /api/phone-numbers/:id` - Delete a phone number
 
-## Setup Instructions
+### Health Check
+- `GET /api/health` - Health check endpoint
 
-### Prerequisites
-- Node.js (v16 atau lebih baru)
-- PostgreSQL (v12 atau lebih baru)
-- npm atau yarn
+## Usage
 
-### Installation Steps
+### Adding Phone Numbers
 
-1. **Clone/Download project ini**
+1. **Single Number**: Click "Add Number" button and fill in the form
+2. **Bulk Import**: Click "Bulk Import" button and paste multiple numbers
 
-2. **Install dependencies**:
-   ```powershell
-   npm install
-   ```
+### Phone Number Formats Supported
 
-3. **Setup PostgreSQL Database**:
-   - Lihat panduan lengkap di [DATABASE_SETUP.md](DATABASE_SETUP.md)
-   - Buat database `whatsapp_numbers_db`
-   - Copy `.env.example` ke `.env` dan sesuaikan konfigurasi
+- International format: `+6281234567890`
+- Indonesian format: `08123456789`
+- Without country code: `81234567890`
 
-4. **Setup database tables**:
-   ```powershell
-   npm run setup
-   ```
+The system automatically normalizes numbers to international format.
 
-5. **Start development server**:
-   ```powershell
-   npm run dev
-   ```
+### Managing Categories
 
-6. **Test API**:
-   - Buka http://localhost:3000/api untuk dokumentasi
-   - Lihat contoh penggunaan di [API_TESTING.md](API_TESTING.md)
+1. Go to the Categories page
+2. Click "Add Category" to create new categories
+3. Use the search bar to find specific categories
+4. Edit or delete categories as needed
 
-## Example Phone Number Formats Supported
+### Duplicate Detection
 
-- `+6285476387` 
-- `+ 62-865-453-765`
-- `+ 62 654 876 543`
-- `+1234567890` (international)
-- `08123456789` (local Indonesia)
+The system automatically:
+- Normalizes phone numbers to a standard format
+- Checks for duplicates in real-time
+- Prevents duplicate entries
+- Shows duplicate warnings during import
 
-Semua format akan dinormalisasi menjadi format standar untuk deteksi duplikasi.
+## Database Schema
 
-## Technologies Used
+### Categories Table
+```sql
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
 
-- Node.js + Express.js
-- PostgreSQL
-- Sequelize ORM
-- Cors, Helmet, Morgan untuk middleware
-- dotenv untuk environment configuration
+### Phone Numbers Table
+```sql
+CREATE TABLE phone_numbers (
+    id SERIAL PRIMARY KEY,
+    original_number VARCHAR(50) NOT NULL,
+    normalized_number VARCHAR(20) NOT NULL UNIQUE,
+    category_id INTEGER REFERENCES categories(id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+## Development
+
+### Running Tests
+```bash
+# Backend tests
+npm test
+
+# Frontend tests
+cd frontend && npm test
+```
+
+### Building for Production
+```bash
+# Build frontend
+cd frontend && npm run build
+
+# Start production server
+npm run production
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+For support, email your-email@example.com or create an issue in the repository.
