@@ -31,7 +31,7 @@ const createCategory = async (req, res) => {
   try {
     const { name, description } = req.body;
     
-    if (!name) {
+    if (!name || !name.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Category name is required'
@@ -84,7 +84,7 @@ const updateCategory = async (req, res) => {
       });
     }
     
-    if (!name) {
+    if (!name || !name.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Category name is required'
@@ -144,15 +144,6 @@ const deleteCategory = async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting category:', error);
-    
-    // Handle foreign key constraint error
-    if (error.name === 'SequelizeForeignKeyConstraintError') {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot delete category that has phone numbers associated with it'
-      });
-    }
-    
     res.status(500).json({
       success: false,
       message: 'Failed to delete category',

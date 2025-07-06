@@ -11,7 +11,7 @@ const Category = sequelize.define('Category', {
     type: DataTypes.STRING(100),
     allowNull: false,
     unique: {
-      msg: 'Category name must be unique'
+      msg: 'Category name already exists'
     },
     validate: {
       notEmpty: {

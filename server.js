@@ -77,7 +77,9 @@ app.use((req, res) => {
       'DELETE /api/categories/:id',
       'GET /api/phone-numbers',
       'POST /api/phone-numbers',
+      'POST /api/phone-numbers/bulk',
       'POST /api/phone-numbers/check',
+      'PUT /api/phone-numbers/:id',
       'DELETE /api/phone-numbers/:id'
     ]
   });

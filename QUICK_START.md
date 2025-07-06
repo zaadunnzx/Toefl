@@ -69,6 +69,64 @@ Buka: http://localhost:3001/test/phone-formats
 - [🗄️ DATABASE_SETUP.md](DATABASE_SETUP.md) - Setup PostgreSQL
 - [🧪 API_TESTING.md](API_TESTING.md) - Contoh testing API
 
+# WhatsApp Numbers Management - Quick Start
+
+## Langkah-langkah Setup:
+
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Setup Database & Seed Categories**
+   ```bash
+   npm run seed
+   ```
+
+3. **Start Server**
+   ```bash
+   npm start
+   ```
+
+4. **Test API (Optional)**
+   ```bash
+   npm test
+   ```
+
+5. **Setup Frontend**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+## Akses Aplikasi:
+- Backend API: http://localhost:3000
+- Frontend: http://localhost:5173
+- API Health Check: http://localhost:3000/api/health
+
+## API Endpoints:
+- `GET /api/categories` - Get all categories
+- `POST /api/categories` - Create category
+- `GET /api/phone-numbers` - Get all phone numbers
+- `POST /api/phone-numbers` - Add single phone number
+- `POST /api/phone-numbers/bulk` - Bulk import phone numbers
+- `POST /api/phone-numbers/check` - Check duplicate
+
+## Features:
+✅ Add single phone number
+✅ Bulk import multiple phone numbers
+✅ Real-time duplicate detection
+✅ Phone number normalization
+✅ Category management
+✅ Search & filter
+✅ Mobile responsive UI
+
+## Database:
+- PostgreSQL database: `wa_db`
+- Tables: `categories`, `phone_numbers`
+- Automatic table creation & seeding
+
 ## 🎯 **Fitur Utama yang Sudah Dibuat:**
 
 ✅ **Kategori Dinamis** - Bisa tambah/edit/hapus kategori kapan saja

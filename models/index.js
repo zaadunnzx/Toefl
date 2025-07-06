@@ -1,12 +1,12 @@
+const { sequelize } = require('../config/database');
 const Category = require('./Category');
 const PhoneNumber = require('./PhoneNumber');
 
-// Define relationships
+// Define associations
 Category.hasMany(PhoneNumber, {
   foreignKey: 'category_id',
   as: 'phoneNumbers',
-  onDelete: 'RESTRICT', // Prevent deletion of category if it has phone numbers
-  onUpdate: 'CASCADE'
+  onDelete: 'CASCADE'
 });
 
 PhoneNumber.belongsTo(Category, {
@@ -14,7 +14,9 @@ PhoneNumber.belongsTo(Category, {
   as: 'category'
 });
 
+// Export models
 module.exports = {
+  sequelize,
   Category,
   PhoneNumber
 };
