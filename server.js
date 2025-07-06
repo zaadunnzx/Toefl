@@ -22,12 +22,10 @@ app.use(express.urlencoded({ extended: true }));
 const { sequelize } = require('./config/database');
 
 // Import routes
-const categoryRoutes = require('./routes/categories');
-const phoneNumberRoutes = require('./routes/phoneNumbers');
+const apiRoutes = require('./routes/index');
 
 // Use routes
-app.use('/api/categories', categoryRoutes);
-app.use('/api/phone-numbers', phoneNumberRoutes);
+app.use('/api', apiRoutes);
 
 // Basic route
 app.get('/', (req, res) => {

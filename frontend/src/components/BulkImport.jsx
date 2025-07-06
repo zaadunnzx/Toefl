@@ -138,9 +138,22 @@ const BulkImport = ({ categories, onImport, onClose }) => {
         }))
       }
       
-      await onImport(numbersData)
+      console.log('Sending bulk import data:', numbersData)
+      
+      const response = await phoneNumbersAPI.createBulk(numbersData)
+      console.log('Bulk import response:', response.data)
+      
+      if (response.data.success) {
+        alert(`Successfully imported ${response.data.data.length} numbers!`)
+        onImport() // Refresh the parent component
+        onClose()
+      } else {
+        alert('Import failed: ' + response.data.message)
+      }
     } catch (error) {
       console.error('Import error:', error)
+      const errorMessage = error.response?.data?.message || 'Failed to import numbers'
+      alert('Import failed: ' + errorMessage)
     } finally {
       setLoading(false)
     }

@@ -290,16 +290,22 @@ const checkPhoneNumber = async (req, res) => {
  */
 const bulkImportPhoneNumbers = async (req, res) => {
   try {
+    console.log('📥 Bulk import request received');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
     const { numbers } = req.body;
     
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
+      console.log('❌ Invalid numbers array');
       return res.status(400).json({
         success: false,
-        message: 'Numbers array is required and cannot be empty'
+        message: 'Numbers array is required and cannot be empty',
+        data: null,
+        errors: []
       });
     }
     
-    console.log('Bulk import request received:', { numbersCount: numbers.length });
+    console.log(`📊 Processing ${numbers.length} numbers`);
     
     const results = [];
     const errors = [];
@@ -308,14 +314,15 @@ const bulkImportPhoneNumbers = async (req, res) => {
       const numberData = numbers[i];
       
       try {
-        console.log(`Processing number ${i + 1}:`, numberData);
+        console.log(`🔄 Processing number ${i + 1}/${numbers.length}:`, numberData);
         
         const { original_number, normalized_number, category_id } = numberData;
         
-        if (!original_number) {
+        // Validate required fields
+        if (!original_number || !original_number.trim()) {
           errors.push({
             index: i,
-            original_number: original_number,
+            original_number: original_number || 'empty',
             error: 'Phone number is required'
           });
           continue;
@@ -347,12 +354,12 @@ const bulkImportPhoneNumbers = async (req, res) => {
           errors.push({
             index: i,
             original_number: original_number,
-            error: 'Category not found'
+            error: `Category with ID ${category_id} not found`
           });
           continue;
         }
         
-        // Check for duplicate before creating
+        // Check for existing number
         const existingNumber = await PhoneNumber.findOne({
           where: { normalized_number: validation.normalized }
         });
@@ -370,7 +377,7 @@ const bulkImportPhoneNumbers = async (req, res) => {
         const phoneNumberRecord = await PhoneNumber.create({
           original_number: original_number.trim(),
           normalized_number: normalized_number || validation.normalized,
-          category_id: category_id
+          category_id: parseInt(category_id)
         });
         
         // Fetch the created record with category info
@@ -383,29 +390,29 @@ const bulkImportPhoneNumbers = async (req, res) => {
         });
         
         results.push(createdRecord);
-        console.log(`✅ Number ${i + 1} created successfully`);
+        console.log(`✅ Number ${i + 1} created successfully: ${original_number}`);
         
       } catch (error) {
         console.error(`❌ Error processing number ${i + 1}:`, error);
         
-        // Handle unique constraint error (duplicate number)
+        let errorMessage = error.message;
+        
+        // Handle specific database errors
         if (error.name === 'SequelizeUniqueConstraintError') {
-          errors.push({
-            index: i,
-            original_number: numberData.original_number,
-            error: 'This phone number already exists in the system'
-          });
-        } else {
-          errors.push({
-            index: i,
-            original_number: numberData.original_number,
-            error: error.message
-          });
+          errorMessage = 'This phone number already exists in the system';
+        } else if (error.name === 'SequelizeForeignKeyConstraintError') {
+          errorMessage = 'Invalid category ID';
         }
+        
+        errors.push({
+          index: i,
+          original_number: numberData.original_number || 'unknown',
+          error: errorMessage
+        });
       }
     }
     
-    console.log(`Bulk import completed: ${results.length} success, ${errors.length} errors`);
+    console.log(`📋 Bulk import completed: ${results.length} success, ${errors.length} errors`);
     
     res.status(201).json({
       success: true,
@@ -415,11 +422,13 @@ const bulkImportPhoneNumbers = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error in bulk import:', error);
+    console.error('❌ Error in bulk import:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to perform bulk import',
-      error: error.message
+      error: error.message,
+      data: null,
+      errors: []
     });
   }
 };

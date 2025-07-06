@@ -34,9 +34,10 @@ router.get('/', (req, res) => {
       phoneNumbers: {
         'GET /api/phone-numbers': 'Get all phone numbers',
         'POST /api/phone-numbers': 'Add new phone number',
+        'POST /api/phone-numbers/bulk': 'Bulk import phone numbers',
+        'POST /api/phone-numbers/check': 'Check if phone number exists',
         'PUT /api/phone-numbers/:id': 'Update phone number',
-        'DELETE /api/phone-numbers/:id': 'Delete phone number',
-        'GET /api/phone-numbers/check/:number': 'Check if phone number exists'
+        'DELETE /api/phone-numbers/:id': 'Delete phone number'
       },
       system: {
         'GET /api/health': 'Health check',

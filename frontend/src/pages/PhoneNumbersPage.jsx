@@ -58,18 +58,10 @@ const PhoneNumbersPage = () => {
     }
   }
 
-  const handleBulkImport = async (numbersData) => {
-    try {
-      const response = await phoneNumbersAPI.createBulk(numbersData)
-      if (response.data.success) {
-        await loadData() // Reload all data
-        setShowBulkImport(false)
-        showNotification(`Successfully imported ${response.data.data.length} phone numbers!`)
-      }
-    } catch (err) {
-      const errorMsg = err.response?.data?.error || 'Failed to import phone numbers'
-      showNotification(errorMsg, 'error')
-    }
+  const handleBulkImport = async () => {
+    // Callback function called by BulkImport component after successful import
+    await loadData() // Reload all data
+    showNotification('Bulk import completed successfully!')
   }
 
   const handleDeleteNumber = async (id) => {
