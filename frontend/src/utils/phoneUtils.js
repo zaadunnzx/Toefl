@@ -3,7 +3,7 @@
  * @param {string} phoneNumber - Raw phone number
  * @returns {string} - Normalized phone number
  */
-const normalizePhoneNumber = (phoneNumber) => {
+export const normalizePhoneNumber = (phoneNumber) => {
   if (!phoneNumber) return '';
   
   // Remove all non-digit characters except '+' and handle various formats
@@ -33,7 +33,7 @@ const normalizePhoneNumber = (phoneNumber) => {
  * @param {string} phoneNumber - Phone number to validate
  * @returns {object} - Validation result
  */
-const validatePhoneNumber = (phoneNumber) => {
+export const validatePhoneNumber = (phoneNumber) => {
   if (!phoneNumber || typeof phoneNumber !== 'string') {
     return {
       isValid: false,
@@ -79,7 +79,7 @@ const validatePhoneNumber = (phoneNumber) => {
  * @param {string} phoneNumber - Phone number to check
  * @returns {boolean} - True if Indonesian number
  */
-const isIndonesianNumber = (phoneNumber) => {
+export const isIndonesianNumber = (phoneNumber) => {
   const normalized = normalizePhoneNumber(phoneNumber);
   return normalized.startsWith('+62');
 };
@@ -89,7 +89,7 @@ const isIndonesianNumber = (phoneNumber) => {
  * @param {string} phoneNumber - Phone number to format
  * @returns {string} - Formatted phone number
  */
-const formatPhoneNumber = (phoneNumber) => {
+export const formatPhoneNumber = (phoneNumber) => {
   if (!phoneNumber) return '';
   
   const normalized = normalizePhoneNumber(phoneNumber);
@@ -110,7 +110,7 @@ const formatPhoneNumber = (phoneNumber) => {
  * @param {string} text - Text containing phone numbers
  * @returns {array} - Array of phone numbers
  */
-const parsePhoneNumbers = (text) => {
+export const parsePhoneNumbers = (text) => {
   if (!text) return [];
   
   // Split by common separators and filter empty lines
@@ -122,10 +122,12 @@ const parsePhoneNumbers = (text) => {
   return lines;
 };
 
-module.exports = {
-  normalizePhoneNumber,
-  validatePhoneNumber,
-  isIndonesianNumber,
-  formatPhoneNumber,
-  parsePhoneNumbers
+/**
+ * Clean phone number for display
+ * @param {string} phoneNumber - Phone number to clean
+ * @returns {string} - Cleaned phone number
+ */
+export const cleanPhoneNumber = (phoneNumber) => {
+  if (!phoneNumber) return '';
+  return phoneNumber.replace(/[^\d+]/g, '');
 };

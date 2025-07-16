@@ -1,193 +1,215 @@
-import React, { useState } from 'react'
-import { Upload, X, AlertTriangle, CheckCircle, Phone, Trash2 } from 'lucide-react'
-import { phoneNumbersAPI } from '../services/api'
-import './BulkImport.css'
+import React, { useState, useEffect, useCallback } from 'react';
+import { categoriesAPI, phoneNumbersAPI } from '../services/api';
+import { normalizePhoneNumber, validatePhoneNumber, parsePhoneNumbers } from '../utils/phoneUtils';
+import './BulkImport.css';
 
-const BulkImport = ({ categories, onImport, onClose }) => {
-  const [numbersText, setNumbersText] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
-  const [parsedNumbers, setParsedNumbers] = useState([])
-  const [duplicateChecks, setDuplicateChecks] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [validating, setValidating] = useState(false)
+const BulkImport = ({ isOpen, onClose, onImportSuccess }) => {
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [phoneNumbersText, setPhoneNumbersText] = useState('');
+  const [parsedNumbers, setParsedNumbers] = useState([]);
+  const [validNumbers, setValidNumbers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [errors, setErrors] = useState([]);
 
-  const parseNumbers = (text) => {
-    const lines = text.split('\n')
-    const numbers = []
-    
-    lines.forEach((line, index) => {
-      const trimmed = line.trim()
-      if (trimmed) {
-        // Remove common separators and extract numbers
-        const cleaned = trimmed.replace(/[^\d+]/g, ' ')
-        const matches = cleaned.match(/(\+?\d+)/g)
-        
-        if (matches) {
-          matches.forEach(match => {
-            if (match.length >= 8) { // Minimum phone number length
-              numbers.push({
-                id: `temp-${Date.now()}-${Math.random()}`,
-                original: match,
-                normalized: normalizeNumber(match),
-                lineNumber: index + 1,
-                isValid: validateNumber(match),
-                isDuplicate: false,
-                isChecking: false
-              })
-            }
-          })
-        }
-      }
-    })
-    
-    return numbers
-  }
-
-  const normalizeNumber = (number) => {
-    let normalized = number.replace(/[^\d+]/g, '')
-    
-    // Convert Indonesian format (08xx) to international (+628xx)
-    if (normalized.startsWith('08')) {
-      normalized = '+62' + normalized.substring(1)
-    } else if (normalized.startsWith('8') && !normalized.startsWith('+')) {
-      normalized = '+62' + normalized
-    } else if (!normalized.startsWith('+')) {
-      normalized = '+' + normalized
+  // Fetch categories on component mount
+  useEffect(() => {
+    if (isOpen) {
+      fetchCategories();
     }
-    
-    return normalized
-  }
+  }, [isOpen]);
 
-  const validateNumber = (number) => {
-    const normalized = normalizeNumber(number)
-    return /^\+\d{8,15}$/.test(normalized)
-  }
+  const fetchCategories = async () => {
+    try {
+      const response = await categoriesAPI.getAll();
+      if (response.data.success) {
+        setCategories(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
-  const handleTextChange = (e) => {
-    const text = e.target.value
-    setNumbersText(text)
-    
-    if (text.trim()) {
-      const parsed = parseNumbers(text)
-      setParsedNumbers(parsed)
+  // Parse and validate phone numbers whenever text changes
+  useEffect(() => {
+    if (phoneNumbersText.trim()) {
+      const numbers = parsePhoneNumbers(phoneNumbersText);
+      setParsedNumbers(numbers);
+      
+      // Validate each number
+      const validated = numbers.map((number, index) => {
+        const validation = validatePhoneNumber(number);
+        return {
+          index,
+          original: number,
+          normalized: validation.normalized,
+          isValid: validation.isValid,
+          error: validation.isValid ? null : validation.message,
+          isDuplicate: false,
+          isChecking: false
+        };
+      });
+      
+      setValidNumbers(validated);
+      
+      // Check for duplicates
+      checkForDuplicates(validated);
     } else {
-      setParsedNumbers([])
+      setParsedNumbers([]);
+      setValidNumbers([]);
     }
-  }
+  }, [phoneNumbersText]);
 
-  const checkDuplicates = async () => {
-    if (parsedNumbers.length === 0) return
+  const checkForDuplicates = useCallback(async (numbers) => {
+    const validNums = numbers.filter(num => num.isValid);
     
-    setValidating(true)
-    const checks = {}
-    
-    for (const number of parsedNumbers) {
-      if (number.isValid) {
-        try {
-          number.isChecking = true
-          setParsedNumbers([...parsedNumbers])
-          
-          const response = await phoneNumbersAPI.checkDuplicate(number.normalized)
-          checks[number.id] = {
-            isDuplicate: response.data.exists,
-            existingId: response.data.existingNumber?.id
-          }
-          
-          number.isChecking = false
-          number.isDuplicate = response.data.exists
-        } catch (error) {
-          console.error('Error checking duplicate:', error)
-          checks[number.id] = { isDuplicate: false }
-          number.isChecking = false
-        }
+    for (let i = 0; i < validNums.length; i++) {
+      const num = validNums[i];
+      
+      // Update checking state
+      setValidNumbers(prev => 
+        prev.map(n => 
+          n.index === num.index ? { ...n, isChecking: true } : n
+        )
+      );
+      
+      try {
+        const response = await phoneNumbersAPI.checkDuplicate(num.original);
+        
+        setValidNumbers(prev => 
+          prev.map(n => 
+            n.index === num.index 
+              ? { 
+                  ...n, 
+                  isDuplicate: response.data.exists, 
+                  isChecking: false,
+                  existingNumber: response.data.existingNumber
+                }
+              : n
+          )
+        );
+      } catch (error) {
+        console.error('Error checking duplicate:', error);
+        setValidNumbers(prev => 
+          prev.map(n => 
+            n.index === num.index ? { ...n, isChecking: false } : n
+          )
+        );
       }
     }
-    
-    setDuplicateChecks(checks)
-    setParsedNumbers([...parsedNumbers])
-    setValidating(false)
-  }
-
-  const removeNumber = (id) => {
-    setParsedNumbers(prev => prev.filter(num => num.id !== id))
-  }
+  }, []);
 
   const handleImport = async () => {
     if (!selectedCategory) {
-      alert('Please select a category')
-      return
+      alert('Please select a category first');
+      return;
     }
+
+    const numbersToImport = validNumbers.filter(num => num.isValid && !num.isDuplicate);
     
-    const validNumbers = parsedNumbers.filter(num => 
-      num.isValid && !num.isDuplicate
-    )
-    
-    if (validNumbers.length === 0) {
-      alert('No valid numbers to import')
-      return
+    if (numbersToImport.length === 0) {
+      alert('No valid numbers to import');
+      return;
     }
-    
-    setLoading(true)
-    
+
+    setImporting(true);
+    setErrors([]);
+
     try {
-      const numbersData = {
-        numbers: validNumbers.map(num => ({
+      const payload = {
+        numbers: numbersToImport.map(num => ({
           original_number: num.original,
           normalized_number: num.normalized,
           category_id: parseInt(selectedCategory)
         }))
-      }
-      
-      console.log('Sending bulk import data:', numbersData)
-      
-      const response = await phoneNumbersAPI.createBulk(numbersData)
-      console.log('Bulk import response:', response.data)
+      };
+
+      console.log('Importing payload:', payload);
+
+      const response = await phoneNumbersAPI.createBulk(payload);
       
       if (response.data.success) {
-        alert(`Successfully imported ${response.data.data.length} numbers!`)
-        onImport() // Refresh the parent component
-        onClose()
-      } else {
-        alert('Import failed: ' + response.data.message)
+        const { data, errors: importErrors } = response.data;
+        
+        if (importErrors && importErrors.length > 0) {
+          setErrors(importErrors);
+        }
+        
+        // Show success message
+        const successCount = data ? data.length : 0;
+        const errorCount = importErrors ? importErrors.length : 0;
+        
+        alert(`Import completed! ${successCount} numbers imported successfully${errorCount > 0 ? `, ${errorCount} errors` : ''}`);
+        
+        if (onImportSuccess) {
+          onImportSuccess(data);
+        }
+        
+        // Reset form if all successful
+        if (errorCount === 0) {
+          resetForm();
+        }
       }
     } catch (error) {
-      console.error('Import error:', error)
-      const errorMessage = error.response?.data?.message || 'Failed to import numbers'
-      alert('Import failed: ' + errorMessage)
+      console.error('Error importing numbers:', error);
+      alert('Error importing numbers: ' + (error.response?.data?.message || error.message));
     } finally {
-      setLoading(false)
+      setImporting(false);
     }
-  }
+  };
 
-  const validCount = parsedNumbers.filter(num => num.isValid && !num.isDuplicate).length
-  const duplicateCount = parsedNumbers.filter(num => num.isDuplicate).length
-  const invalidCount = parsedNumbers.filter(num => !num.isValid).length
+  const resetForm = () => {
+    setSelectedCategory('');
+    setPhoneNumbersText('');
+    setParsedNumbers([]);
+    setValidNumbers([]);
+    setErrors([]);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const removeNumber = (index) => {
+    const newNumbers = parsedNumbers.filter((_, i) => i !== index);
+    setPhoneNumbersText(newNumbers.join('\n'));
+  };
+
+  // Calculate stats
+  const totalNumbers = validNumbers.length;
+  const validCount = validNumbers.filter(num => num.isValid && !num.isDuplicate).length;
+  const duplicateCount = validNumbers.filter(num => num.isDuplicate).length;
+  const invalidCount = validNumbers.filter(num => !num.isValid).length;
+
+  if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="bulk-import-modal" onClick={e => e.stopPropagation()}>
+    <div className="modal-overlay">
+      <div className="bulk-import-modal">
         <div className="modal-header">
           <h2>
-            <Upload size={24} />
-            Bulk Import Phone Numbers
+            📤 Bulk Import Phone Numbers
           </h2>
-          <button className="modal-close" onClick={onClose}>
-            <X size={20} />
+          <button className="modal-close" onClick={handleClose}>
+            ✕
           </button>
         </div>
 
         <div className="modal-body">
           <div className="import-steps">
+            {/* Step 1: Select Category */}
             <div className="step">
               <h3>Step 1: Select Category</h3>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="category-select"
-                required
+                disabled={loading}
               >
                 <option value="">Select a category</option>
-                {categories.map(category => (
+                {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
@@ -195,90 +217,106 @@ const BulkImport = ({ categories, onImport, onClose }) => {
               </select>
             </div>
 
+            {/* Step 2: Enter Phone Numbers */}
             <div className="step">
               <h3>Step 2: Enter Phone Numbers</h3>
               <p className="step-description">
                 Paste your phone numbers below. Each number should be on a new line. 
-                Supports various formats: +628123456789, 08123456789, 8123456789
+                Supports various formats: +62 813-4321-6935, +628123456789, 08123456789, 8123456789
               </p>
               <textarea
-                value={numbersText}
-                onChange={handleTextChange}
-                placeholder="Enter phone numbers (one per line):&#10;+628123456789&#10;08234567890&#10;081234567891"
+                value={phoneNumbersText}
+                onChange={(e) => setPhoneNumbersText(e.target.value)}
+                placeholder="Paste phone numbers here, one per line:
++62 813-4321-6935
++62 851-5917-7290
+08123456789
+8123456789"
                 className="numbers-textarea"
-                rows={8}
+                rows={10}
               />
             </div>
 
-            {parsedNumbers.length > 0 && (
-              <div className="step">
-                <h3>Step 3: Review & Validate</h3>
-                <div className="validation-summary">
-                  <div className="summary-stats">
-                    <div className="summary-stat">
-                      <span className="stat-number text-success">{validCount}</span>
-                      <span className="stat-label">Valid</span>
-                    </div>
-                    <div className="summary-stat">
-                      <span className="stat-number text-warning">{duplicateCount}</span>
-                      <span className="stat-label">Duplicates</span>
-                    </div>
-                    <div className="summary-stat">
-                      <span className="stat-number text-error">{invalidCount}</span>
-                      <span className="stat-label">Invalid</span>
-                    </div>
+            {/* Validation Summary */}
+            {totalNumbers > 0 && (
+              <div className="validation-summary">
+                <div className="summary-stats">
+                  <div className="summary-stat">
+                    <span className="stat-number">{totalNumbers}</span>
+                    <span className="stat-label">Total</span>
                   </div>
-                  <button 
-                    className="btn btn-outline"
-                    onClick={checkDuplicates}
-                    disabled={validating}
-                  >
-                    {validating ? 'Checking...' : 'Check Duplicates'}
-                  </button>
+                  <div className="summary-stat">
+                    <span className="stat-number text-success">{validCount}</span>
+                    <span className="stat-label">Valid</span>
+                  </div>
+                  <div className="summary-stat">
+                    <span className="stat-number text-warning">{duplicateCount}</span>
+                    <span className="stat-label">Duplicate</span>
+                  </div>
+                  <div className="summary-stat">
+                    <span className="stat-number text-error">{invalidCount}</span>
+                    <span className="stat-label">Invalid</span>
+                  </div>
                 </div>
+              </div>
+            )}
 
+            {/* Numbers Preview */}
+            {validNumbers.length > 0 && (
+              <div className="step">
+                <h3>Step 3: Review Numbers</h3>
                 <div className="numbers-preview">
-                  {parsedNumbers.map(number => (
-                    <div 
-                      key={number.id} 
-                      className={`number-item ${!number.isValid ? 'invalid' : ''} ${number.isDuplicate ? 'duplicate' : ''}`}
+                  {validNumbers.map((number, index) => (
+                    <div
+                      key={index}
+                      className={`number-item ${
+                        !number.isValid ? 'invalid' : 
+                        number.isDuplicate ? 'duplicate' : ''
+                      }`}
                     >
                       <div className="number-info">
                         <div className="number-display">
-                          <Phone size={16} />
                           <span className="original">{number.original}</span>
-                          {number.original !== number.normalized && (
+                          {number.normalized && (
                             <span className="normalized">→ {number.normalized}</span>
                           )}
                         </div>
                         <div className="number-status">
-                          {number.isChecking && <div className="spinner small"></div>}
-                          {!number.isValid && (
-                            <span className="status-badge error">
-                              <AlertTriangle size={12} />
-                              Invalid
-                            </span>
+                          {number.isChecking && (
+                            <div className="spinner small">Checking...</div>
                           )}
-                          {number.isDuplicate && (
-                            <span className="status-badge warning">
-                              <AlertTriangle size={12} />
-                              Duplicate
-                            </span>
-                          )}
-                          {number.isValid && !number.isDuplicate && (
-                            <span className="status-badge success">
-                              <CheckCircle size={12} />
-                              Valid
+                          {!number.isChecking && (
+                            <span className={`status-badge ${
+                              !number.isValid ? 'error' : 
+                              number.isDuplicate ? 'warning' : 'success'
+                            }`}>
+                              {!number.isValid ? 'Invalid' : 
+                               number.isDuplicate ? 'Duplicate' : 'Valid'}
                             </span>
                           )}
                         </div>
                       </div>
-                      <button 
+                      <button
                         className="remove-number"
-                        onClick={() => removeNumber(number.id)}
+                        onClick={() => removeNumber(index)}
+                        title="Remove number"
                       >
-                        <Trash2 size={14} />
+                        ✕
                       </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Import Errors */}
+            {errors.length > 0 && (
+              <div className="step">
+                <h3>Import Errors</h3>
+                <div className="errors-list">
+                  {errors.map((error, index) => (
+                    <div key={index} className="error-item">
+                      <span>❌ {error.original_number}: {error.error}</span>
                     </div>
                   ))}
                 </div>
@@ -288,21 +326,24 @@ const BulkImport = ({ categories, onImport, onClose }) => {
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-outline" onClick={onClose}>
+          <button className="btn btn-secondary" onClick={handleClose}>
             Cancel
           </button>
-          <button 
+          <button
             className="btn btn-primary"
             onClick={handleImport}
-            disabled={loading || validCount === 0 || !selectedCategory}
+            disabled={importing || !selectedCategory || validCount === 0}
           >
-            {loading && <div className="spinner"></div>}
-            Import {validCount} Numbers
+            {importing ? (
+              <span className="spinner">Importing...</span>
+            ) : (
+              `Import ${validCount} Numbers`
+            )}
           </button>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BulkImport
+export default BulkImport;
