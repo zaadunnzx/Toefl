@@ -42,13 +42,26 @@ app.get('/', (req, res) => {
 });
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'API is healthy',
-    timestamp: new Date().toISOString(),
-    database: 'connected'
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Test database connection
+    await sequelize.authenticate();
+    res.json({
+      success: true,
+      message: 'API is healthy',
+      timestamp: new Date().toISOString(),
+      database: 'connected',
+      uptime: process.uptime(),
+      memory: process.memoryUsage()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Database connection failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Error handling middleware
@@ -95,29 +108,72 @@ async function startServer() {
     await sequelize.sync({ alter: true });
     console.log('✅ Database models synchronized.');
     
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📡 API available at: http://localhost:${PORT}`);
       console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
       console.log(`📋 Categories API: http://localhost:${PORT}/api/categories`);
       console.log(`📱 Phone Numbers API: http://localhost:${PORT}/api/phone-numbers`);
     });
+
+    // Handle server errors
+    server.on('error', (error) => {
+      console.error('❌ Server error:', error);
+      if (error.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${PORT} is already in use`);
+      }
+    });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('📤 SIGTERM received, shutting down gracefully');
+      server.close(() => {
+        console.log('✅ Server closed');
+        sequelize.close();
+        process.exit(0);
+      });
+    });
+    
+    process.on('SIGINT', () => {
+      console.log('📤 SIGINT received, shutting down gracefully');
+      server.close(() => {
+        console.log('✅ Server closed');
+        sequelize.close();
+        process.exit(0);
+      });
+    });
+
+    // Database connection monitoring
+    setInterval(async () => {
+      try {
+        await sequelize.authenticate();
+        console.log('⏰ Database connection check: OK');
+      } catch (error) {
+        console.error('❌ Database connection check failed:', error.message);
+      }
+    }, 60000); // Check every minute
+    
   } catch (error) {
     console.error('❌ Unable to start server:', error.message);
     console.error('Full error:', error);
-    process.exit(1);
+    // Don't exit process, retry connection
+    console.log('⏳ Retrying connection in 5 seconds...');
+    setTimeout(() => {
+      startServer();
+    }, 5000);
   }
 }
 
-// Handle uncaught exceptions
+// Handle uncaught exceptions - don't exit process
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  process.exit(1);
+  console.error('❌ Uncaught Exception:', error);
+  console.error('Stack:', error.stack);
+  // Log error but don't exit - let server continue running
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  // Log error but don't exit - let server continue running
 });
 
 startServer();

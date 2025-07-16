@@ -1,25 +1,25 @@
 {
-  "name": "whatsapp-numbers-backend",
+  "name": "whatsapp-numbers-api",
   "version": "1.0.0",
-  "description": "WhatsApp Numbers Management System Backend",
+  "description": "WhatsApp Numbers Management API with dynamic categorization",
   "main": "server.js",
   "scripts": {
-    "test": "node testAPI.js",
-    "test-bulk": "node testBulkImport.js",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node seedCategories.js"
+    "monitor": "node monitor.js",
+    "check-db": "node checkDatabase.js",
+    "seed": "node seedCategories.js",
+    "test": "node testAPI.js",
+    "test-formats": "node testPhoneFormats.js"
   },
   "keywords": [
     "whatsapp",
     "phone",
     "numbers",
-    "management",
-    "nodejs",
-    "express",
-    "postgresql"
+    "api",
+    "categories"
   ],
-  "author": "",
+  "author": "Your Name",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^3.0.2",

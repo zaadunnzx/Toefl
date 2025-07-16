@@ -2,22 +2,45 @@ const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
 const sequelize = new Sequelize({
-  dialect: 'postgres',
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || 'whatsapp_numbers',
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '',
-  logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  dialect: 'postgresql',
+
+  // Connection pool configuration
   pool: {
-    max: 5,
+    max: 10,
     min: 0,
     acquire: 30000,
     idle: 10000
   },
-  define: {
-    underscored: true,
-    timestamps: true
+
+  // Logging configuration
+  logging: (msg) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🗃️ DB:', msg);
+    }
+  },
+
+  // Retry configuration
+  retry: {
+    max: 3,
+    backoffBase: 1000,
+    backoffExponent: 1.5
+  },
+
+  // Timezone
+  timezone: '+07:00',
+
+  // Connection options
+  dialectOptions: {
+    connectTimeout: 60000,
+    acquireTimeout: 60000,
+    timeout: 60000,
+    statement_timeout: 60000,
+    idle_in_transaction_session_timeout: 60000
   }
 });
 
