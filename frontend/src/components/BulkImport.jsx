@@ -3,8 +3,8 @@ import { categoriesAPI, phoneNumbersAPI } from '../services/api';
 import { normalizePhoneNumber, validatePhoneNumber, parsePhoneNumbers } from '../utils/phoneUtils';
 import './BulkImport.css';
 
-const BulkImport = ({ isOpen, onClose, onImportSuccess }) => {
-  const [categories, setCategories] = useState([]);
+const BulkImport = ({ isOpen, onClose, onImportSuccess, categories: propCategories }) => {
+  const [categories, setCategories] = useState(propCategories || []);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [phoneNumbersText, setPhoneNumbersText] = useState('');
   const [parsedNumbers, setParsedNumbers] = useState([]);
@@ -183,6 +183,17 @@ const BulkImport = ({ isOpen, onClose, onImportSuccess }) => {
   const duplicateCount = validNumbers.filter(num => num.isDuplicate).length;
   const invalidCount = validNumbers.filter(num => !num.isValid).length;
 
+  // Debug log
+  console.log('BulkImport Debug:', {
+    totalNumbers,
+    validCount,
+    duplicateCount,
+    invalidCount,
+    selectedCategory,
+    importing,
+    canImport: !importing && selectedCategory && validCount > 0
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -335,7 +346,9 @@ const BulkImport = ({ isOpen, onClose, onImportSuccess }) => {
             disabled={importing || !selectedCategory || validCount === 0}
           >
             {importing ? (
-              <span className="spinner">Importing...</span>
+              <>
+                <span className="spinner">Importing...</span>
+              </>
             ) : (
               `Import ${validCount} Numbers`
             )}

@@ -121,6 +121,7 @@ async function startServer() {
       console.error('❌ Server error:', error);
       if (error.code === 'EADDRINUSE') {
         console.error(`❌ Port ${PORT} is already in use`);
+        process.exit(1);
       }
     });
 
@@ -143,24 +144,24 @@ async function startServer() {
       });
     });
 
-    // Database connection monitoring
+    // Keep server alive with periodic health checks
     setInterval(async () => {
       try {
         await sequelize.authenticate();
         console.log('⏰ Database connection check: OK');
       } catch (error) {
         console.error('❌ Database connection check failed:', error.message);
+        // Try to reconnect
+        setTimeout(startServer, 5000);
       }
     }, 60000); // Check every minute
     
   } catch (error) {
     console.error('❌ Unable to start server:', error.message);
     console.error('Full error:', error);
-    // Don't exit process, retry connection
+    // Retry connection after 5 seconds
     console.log('⏳ Retrying connection in 5 seconds...');
-    setTimeout(() => {
-      startServer();
-    }, 5000);
+    setTimeout(startServer, 5000);
   }
 }
 

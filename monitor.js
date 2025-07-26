@@ -1,50 +1,53 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-console.log('🔍 Starting WhatsApp Numbers API Monitor...');
-
 function startServer() {
-  console.log('🚀 Starting server...');
+  console.log('🚀 Starting server with monitoring...');
   
   const server = spawn('node', ['server.js'], {
     cwd: __dirname,
     stdio: 'inherit',
-    env: process.env
+    env: { ...process.env, NODE_ENV: 'development' }
   });
   
   server.on('close', (code) => {
-    console.log(`❌ Server exited with code ${code}`);
-    console.log('⏳ Restarting server in 5 seconds...');
+    console.log(`\n❌ Server exited with code ${code}`);
     
+    if (code === 0) {
+      console.log('✅ Server shut down gracefully');
+      return;
+    }
+    
+    console.log('⏳ Restarting server in 5 seconds...');
     setTimeout(() => {
-      console.log('🔄 Restarting server...');
       startServer();
     }, 5000);
   });
   
   server.on('error', (error) => {
-    console.error('❌ Server error:', error);
-    console.log('⏳ Restarting server in 5 seconds...');
-    
+    console.error('❌ Server spawn error:', error);
+    console.log('⏳ Retrying in 5 seconds...');
     setTimeout(() => {
-      console.log('🔄 Restarting server...');
       startServer();
     }, 5000);
   });
   
   // Handle process termination
-  process.on('SIGTERM', () => {
-    console.log('📤 SIGTERM received, stopping monitor...');
-    server.kill('SIGTERM');
-    process.exit(0);
+  process.on('SIGINT', () => {
+    console.log('\n📤 Received SIGINT, shutting down server...');
+    server.kill('SIGINT');
   });
   
-  process.on('SIGINT', () => {
-    console.log('📤 SIGINT received, stopping monitor...');
-    server.kill('SIGINT');
-    process.exit(0);
+  process.on('SIGTERM', () => {
+    console.log('\n📤 Received SIGTERM, shutting down server...');
+    server.kill('SIGTERM');
   });
 }
 
 // Start monitoring
+console.log('🔍 Backend Server Monitor');
+console.log('========================');
+console.log('Press Ctrl+C to stop monitoring');
+console.log('');
+
 startServer();

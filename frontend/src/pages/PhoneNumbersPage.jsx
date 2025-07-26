@@ -58,10 +58,16 @@ const PhoneNumbersPage = () => {
     }
   }
 
-  const handleBulkImport = async () => {
+  const handleBulkImport = async (importedNumbers) => {
     // Callback function called by BulkImport component after successful import
-    await loadData() // Reload all data
-    showNotification('Bulk import completed successfully!')
+    if (importedNumbers && importedNumbers.length > 0) {
+      // Add imported numbers to existing list
+      setPhoneNumbers(prev => [...prev, ...importedNumbers]);
+      showNotification(`Successfully imported ${importedNumbers.length} numbers!`);
+    }
+    // Also reload all data to ensure consistency
+    await loadData();
+    setShowBulkImport(false);
   }
 
   const handleDeleteNumber = async (id) => {
@@ -228,8 +234,9 @@ const PhoneNumbersPage = () => {
 
       {showBulkImport && (
         <BulkImport
+          isOpen={showBulkImport}
           categories={categories}
-          onImport={handleBulkImport}
+          onImportSuccess={handleBulkImport}
           onClose={() => setShowBulkImport(false)}
         />
       )}
