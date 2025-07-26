@@ -10,7 +10,11 @@
     "check-db": "node checkDatabase.js",
     "seed": "node seedCategories.js",
     "test": "node testAPI.js",
-    "test-formats": "node testPhoneFormats.js"
+    "test-formats": "node testPhoneFormats.js",
+    "build": "cd frontend && npm install && npm run build",
+    "deploy-vercel": "vercel --prod",
+    "test-vercel": "node test-vercel-deployment.js",
+    "setup-vercel": "npm install -g vercel && npm install @supabase/supabase-js"
   },
   "keywords": [
     "whatsapp",

@@ -1,6 +1,9 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+// Determine API base URL based on environment
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '' // For Vercel, use relative URLs (same domain)
+  : 'http://localhost:3000'
 
 // Create axios instance with default config
 const api = axios.create({
@@ -44,8 +47,8 @@ export const categoriesAPI = {
   getAll: () => api.get('/api/categories'),
   getById: (id) => api.get(`/api/categories/${id}`),
   create: (data) => api.post('/api/categories', data),
-  update: (id, data) => api.put(`/api/categories/${id}`, data),
-  delete: (id) => api.delete(`/api/categories/${id}`),
+  update: (id, data) => api.put(`/api/categories?id=${id}`, data),
+  delete: (id) => api.delete(`/api/categories?id=${id}`),
 }
 
 // Phone Numbers API
@@ -55,11 +58,11 @@ export const phoneNumbersAPI = {
   create: (data) => api.post('/api/phone-numbers', data),
   createBulk: (data) => {
     console.log('📤 Bulk import request:', data)
-    return api.post('/api/phone-numbers/bulk', data)
+    return api.post('/api/phone-numbers-bulk', data)
   },
-  checkDuplicate: (number) => api.post('/api/phone-numbers/check', { number }),
-  update: (id, data) => api.put(`/api/phone-numbers/${id}`, data),
-  delete: (id) => api.delete(`/api/phone-numbers/${id}`),
+  checkDuplicate: (number) => api.post('/api/phone-numbers-check', { phone_number: number }),
+  update: (id, data) => api.put(`/api/phone-numbers?id=${id}`, data),
+  delete: (id) => api.delete(`/api/phone-numbers?id=${id}`),
 }
 
 export default api
